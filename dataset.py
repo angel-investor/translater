@@ -1,10 +1,12 @@
 from torch.utils.data import Dataset
 import torch
 
-from data_preprocess import read_data
+from data_preprocess import device, read_data
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print("device-->", device)
+"""
+    数据加载类
+"""
+
 SOS_token = 0
 EOS_token = 1
 max_length = 10

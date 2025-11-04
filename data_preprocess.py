@@ -51,8 +51,8 @@ def read_data():
                 french_word2index[word] = french_word_n
                 french_word_n += 1
 
-    # print(len(english_word2index))
-    # print(len(french_word2index))
+    print(len(english_word2index))
+    print(len(french_word2index))
 
     # 构建index2word词表
     english_index2word = {v: k for k, v in english_word2index.items()}
