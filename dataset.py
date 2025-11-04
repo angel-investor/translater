@@ -1,3 +1,4 @@
+# -*-coding:utf-8-*-
 from torch.utils.data import Dataset
 import torch
 
@@ -9,7 +10,7 @@ from data_preprocess import device, read_data
 
 SOS_token = 0
 EOS_token = 1
-max_length = 10
+MAX_LENGTH = 10
 file_path = "./data/eng-fra-v2.txt"
 
 # 全局函数调用加载数据的函数
@@ -39,8 +40,8 @@ class MyPairDataset(Dataset):
         x.append(EOS_token)
         y.append(EOS_token)
         # 张量化
-        tensor_x = torch.tensor(x, device=device)
-        tensor_y = torch.tensor(y, device=device)
+        tensor_x = torch.tensor(x, dtype=torch.long, device=device)
+        tensor_y = torch.tensor(y, dtype=torch.long, device=device)
 
         return tensor_x, tensor_y
 

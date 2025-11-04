@@ -1,3 +1,4 @@
+# -*-coding:utf-8-*-
 import re
 import torch
 
@@ -9,7 +10,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("device-->", device)
 SOS_token = 0
 EOS_token = 1
-max_length = 10
+MAX_LENGTH = 10
 file_path = "./data/eng-fra-v2.txt"
 
 
