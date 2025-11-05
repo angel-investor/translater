@@ -37,6 +37,7 @@ def predict_iter(x, encoder, decoder):
             # 基于模型的预测结果output_y[1, 4345],找出最大概率值对应的索引就是真实的法文
             topv, topi = torch.topk(output_y, k=1)
             # decode_weights-->[10 ,10]     attn_weight-->[1, 1, 10]
+            # 这里写attn_weight、attn_weight[0]、attn_weight[0][0]都可以
             decode_weights[idx] = attn_weight
             # print(f'topi--> {topi}')
             # print(f'topi--> {topi.item()}')
