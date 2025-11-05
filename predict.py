@@ -49,7 +49,7 @@ def predict_iter(x, encoder, decoder):
 
             # 更新input_y
             input_y = topi.detach()
-
+        # 返回注意力张量权重分布表(把没有用到的部分切掉)
         return decode_words, decode_weights[:idx + 1]
 
 
@@ -89,7 +89,6 @@ def predict():
         print('y-->', y)
         print('predict_text-->', predict_text)
         print("**" * 20)
-
 
 
 if __name__ == '__main__':

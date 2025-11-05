@@ -131,7 +131,7 @@ def train():
     # 绘图展示损失
     plt.figure()
     plt.plot(plot_loss_list)
-    plt.savefig('./img/loss.png')
+    plt.savefig('./imgs/loss.png')
     plt.show()
 
 
