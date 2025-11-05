@@ -5,12 +5,11 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from data_preprocess import device, read_data, MAX_LENGTH
-from dataset import MyPairDataset, SOS_token
-
-english_word2index, english_index2word, english_word_n, \
+from dataset import MyPairDataset,MAX_LENGTH, device, \
+    english_word2index, english_index2word, english_word_n, \
     french_word2index, french_index2word, french_word_n, \
-    my_pairs = read_data()
+    my_pairs
+from dataset import MyPairDataset, SOS_token
 
 
 class Encoder(nn.Module):
@@ -80,6 +79,7 @@ class Decoder(nn.Module):
         return torch.zeros(1, 1, self.hidden_size, device=device)
 
 
+# 测试解码器
 def test_decoder():
     # 准备数据
     my_dataset = MyPairDataset(my_pairs)
@@ -108,27 +108,48 @@ class DecoderAttention(nn.Module):
         super().__init__()
         self.fr_vocab_size = fr_vocab_size
         self.hidden_size = hidden_size
+        self.max_len = max_len
 
         # 定义网络层
+        # 定义Embedding层
         self.embedding = nn.Embedding(fr_vocab_size, hidden_size)
+        # 按照注意力计算规则的第一规则（Q和K进行拼接，然后经过Linear层线性变换，Softmax之后，再和V相乘）
+        # 定义Linear层线性变换
         self.attn = nn.Linear(hidden_size * 2, max_len)
+        # 按照注意力计算步骤，如果第一步时拼接操作，第二步需要将q和第一步的结果进行拼接，然后再经过第三步linear层指定维度输出
         self.attn_combine = nn.Linear(hidden_size * 2, hidden_size)
+        # 定义GRU层
         self.gru = nn.GRU(hidden_size, hidden_size, batch_first=True)
+        # 定义输出层
         self.out = nn.Linear(hidden_size, fr_vocab_size)
         self.softmax = nn.LogSoftmax(dim=-1)
 
     def forward(self, q, k, v):
+        # q-->代表上一个时间步预测出来的结果--》shape-->[1, 1]
+        # k-->代表上一个时间步隐藏层输出结果--》shape->[1,1, 256]
+        # v-->代表编码器对英文句子编码之后的结果：shape:[1, ?, 256]-->[1, max_len, 256]-->[1, 10, 256]
+        # 1. 对q输入进行embedding的表示:embed_x-->shape-->[1,1,256]
         embed_x = self.embedding(q)
+        # 2. 对上述的embed_x进行随机的失活:dropout_x-->[1, 1, 256]
         dropout_x = F.dropout(embed_x, p=0.1)
+        # 3.按照注意力计算规则计算：
+        # 将query(dropout_x-->[1,1,256])和key(k-->[1,1,256])进行拼接;然后经过Linear线性变换;
+        # atten_weights-->shape-->[1,1,?]-->[1,1,max_len]-->[1,1,10]
         attn_weights = self.attn(torch.cat([dropout_x, k], dim=-1))
+        # 将atten_weights经过softmax之后 要和V(v-->[1, 10, 256])进行相乘-->attn_applied-->[1,1,256]
+        # F.softmax(atten_weights, dim=-1)-->[1, 1, 10]
         attn_applied = torch.bmm(F.softmax(attn_weights, dim=-1), v)
+        # 按照注意力步骤的第二步：将上述的结果attn_applied([1,1,256]和原来query(dropout_x([1,1,256]))进行拼接
+        # 还要按照第三步，将拼接后的结果按照指定尺寸输出：Linear线性变换;attention-->[1,1,256]
         attention = self.attn_combine(torch.cat([dropout_x, attn_applied], dim=-1))
         attention = F.relu(attention)
-        output, hn = self.gru(attention, k)
+        # 4. 将attention([1,1, 256])和k(hidden([1,1,256]))送入GRU模型;output-->[1, 1,256]
+        output, hn = self.gru(attention, k)# 5. 基于上述的output结果送入输出层预测结果result-->[1, 4345]
         result = self.softmax(self.out(output))
-        return result, hn, attn_weights
+        return result[0], hn, attn_weights
 
 
+# 测试（带注意力）解码器
 def test_decoderAttention():
     # 准备数据
     my_dataset = MyPairDataset(my_pairs)
@@ -160,7 +181,6 @@ def test_decoderAttention():
             # print("result-->", result.shape)
             # print("hn-->", hn.shape)
             # print("attn_weights-->", attn_weights.shape)
-
 
 
 if __name__ == '__main__':
